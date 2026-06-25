@@ -1,0 +1,40 @@
+spring:
+  application:
+    name: matricula
+
+  # Forzar Zona Horaria
+  jackson:
+    time-zone: America/Lima
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/matricula_db?useSSL=false&serverTimezone=America/Lima&allowPublicKeyRetrieval=true
+    username: matricula_user
+    password: matricula_password
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate # Flyway tomará el control absoluto
+    show-sql: false # Solo activar en desarrollo para debug
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+jwt:
+  secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970 # Llave de 256 bits generada
+  expiration: 86400000 # 24 horas en milisegundos
+
+logging:
+  level:
+    root: INFO
+    com.institucion.matricula: DEBUG
