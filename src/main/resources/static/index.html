@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MATRÍCULA TPD · Sistema de Gestión Escolar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+          darkMode: 'class',
+          theme: {
+            extend: {
+              fontFamily: { sans: ['Inter','sans-serif'], display: ['Manrope','sans-serif'] },
+              borderRadius: { xl2: '18px' }
+            }
+          }
+        }
+    </script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.45.1/dist/apexcharts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.5/dist/cdn.min.js" defer></script>
+    <style>
+        :root{
+          --navy:#1A237E; --navy-l:#3949AB; --success:#00C853; --warning:#FF9800; --error:#F44336; --info:#03A9F4;
+          --bg:#F7F9FC; --card:#FFFFFF; --text:#1E293B; --text-2:#64748B; --border:#E6EBF3;
+          --shadow-sm: 0 1px 2px rgba(20,30,60,.04), 0 1px 1px rgba(20,30,60,.03);
+          --shadow-md: 0 8px 24px rgba(26,35,126,.07), 0 2px 6px rgba(26,35,126,.04);
+          --shadow-lg: 0 20px 48px rgba(26,35,126,.14), 0 4px 12px rgba(26,35,126,.06);
+        }
+        .dark{
+          --bg:#0A0F1D; --card:#121A2C; --text:#E8ECF6; --text-2:#8B97AE; --border:#212B42;
+          --shadow-sm: 0 1px 2px rgba(0,0,0,.3);
+          --shadow-md: 0 8px 24px rgba(0,0,0,.35);
+          --shadow-lg: 0 20px 48px rgba(0,0,0,.5);
+        }
+        *{ box-sizing:border-box; }
+        body{ background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; transition: background .3s ease, color .3s ease; }
+        .font-display{ font-family:'Manrope',sans-serif; }
+        .surface{ background:var(--card); border:1px solid var(--border); }
+        .text-main{ color:var(--text); }
+        .text-muted{ color:var(--text-2); }
+        .border-subtle{ border-color:var(--border); }
+        .bg-app{ background:var(--bg); }
+        .shadow-card{ box-shadow:var(--shadow-sm); }
+        .shadow-card-hover:hover{ box-shadow:var(--shadow-md); transform:translateY(-3px); }
+        .card{ background:var(--card); border:1px solid var(--border); border-radius:18px; box-shadow:var(--shadow-sm); transition: box-shadow .28s cubic-bezier(.4,0,.2,1), transform .28s cubic-bezier(.4,0,.2,1), border-color .28s; }
+        .card-hover:hover{ box-shadow:var(--shadow-md); transform:translateY(-4px); border-color: rgba(57,73,171,.25); }
+        .btn-grad{ background:linear-gradient(135deg, var(--navy) 0%, var(--navy-l) 100%); box-shadow: 0 6px 16px rgba(26,35,126,.28); transition:all .25s cubic-bezier(.4,0,.2,1); }
+        .btn-grad:hover{ box-shadow: 0 10px 24px rgba(26,35,126,.4); transform:translateY(-1px); filter:brightness(1.06); }
+        .btn-grad:active{ transform:translateY(0px) scale(.98); }
+        .ring-focus:focus-visible{ outline:none; box-shadow:0 0 0 3px rgba(57,73,171,.35); }
+        ::-webkit-scrollbar{ width:8px; height:8px; }
+        ::-webkit-scrollbar-track{ background:transparent; }
+        ::-webkit-scrollbar-thumb{ background:var(--border); border-radius:8px; }
+        @keyframes fadeIn{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
+        @keyframes slideInRight{ from{opacity:0; transform:translateX(16px);} to{opacity:1; transform:translateX(0);} }
+        @keyframes popIn{ from{opacity:0; transform:scale(.92);} to{opacity:1; transform:scale(1);} }
+        @keyframes shimmer{ 0%{background-position:-400px 0;} 100%{background-position:400px 0;} }
+        @keyframes pulseDot{ 0%,100%{opacity:1;} 50%{opacity:.35;} }
+        @keyframes successPop{ 0%{transform:scale(.6); opacity:0;} 60%{transform:scale(1.08); opacity:1;} 100%{transform:scale(1);} }
+        .anim-fade{ animation: fadeIn .35s cubic-bezier(.4,0,.2,1) both; }
+        .anim-slide{ animation: slideInRight .3s cubic-bezier(.4,0,.2,1) both; }
+        .anim-pop{ animation: popIn .28s cubic-bezier(.34,1.56,.64,1) both; }
+        .anim-success{ animation: successPop .5s cubic-bezier(.34,1.56,.64,1) both; }
+        .pulse-dot{ animation: pulseDot 1.6s ease-in-out infinite; }
+        .skeleton{ background: linear-gradient(90deg, var(--border) 25%, rgba(150,160,190,.18) 37%, var(--border) 63%); background-size:400px 100%; animation: shimmer 1.4s ease-in-out infinite; border-radius:10px; }
+        .glass{ backdrop-filter: blur(16px) saturate(160%); background: rgba(255,255,255,.72); border:1px solid rgba(255,255,255,.5); }
+        .dark .glass{ background: rgba(18,26,44,.72); border:1px solid rgba(255,255,255,.06); }
+        .glow::before{ content:''; position:absolute; inset:-1px; border-radius:inherit; padding:1px; background:linear-gradient(135deg, rgba(57,73,171,.5), transparent 60%); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; pointer-events:none; opacity:0; transition:opacity .3s; }
+        .glow:hover::before{ opacity:1; }
+        .ripple{ position:relative; overflow:hidden; }
+        .ripple-circle{ position:absolute; border-radius:50%; background:rgba(255,255,255,.55); transform:scale(0); animation:rippleAnim .55s ease-out; pointer-events:none; }
+        @keyframes rippleAnim{ to{ transform:scale(2.6); opacity:0; } }
+        .dot-grid{ background-image:radial-gradient(rgba(26,35,126,.07) 1px, transparent 1px); background-size:18px 18px; }
+        .dark .dot-grid{ background-image:radial-gradient(rgba(255,255,255,.06) 1px, transparent 1px); }
+        .sidebar-link{ position:relative; transition: all .22s ease; }
+        .sidebar-link.active{ background:linear-gradient(135deg, rgba(57,73,171,.14), rgba(57,73,171,.04)); color:var(--navy-l); }
+        .dark .sidebar-link.active{ color:#8C9EFF; }
+        .sidebar-link.active::before{ content:''; position:absolute; left:0; top:8px; bottom:8px; width:3px; border-radius:3px; background:linear-gradient(180deg, var(--navy), var(--navy-l)); }
+        .sidebar-link:hover:not(.active){ background:rgba(100,116,139,.08); }
+        [x-cloak]{ display:none !important; }
+        .scale-hover{ transition: transform .2s cubic-bezier(.4,0,.2,1); }
+        .scale-hover:hover{ transform: scale(1.015); }
+        .apexcharts-tooltip{ box-shadow:var(--shadow-md) !important; border-radius:12px !important; }
+    </style>
+</head>
+<body class="bg-app text-main antialiased" x-data="appData()" x-init="init()" :class="darkMode ? 'dark' : ''">
+
+<!-- ============ TOASTS ============ -->
+<div class="fixed top-5 right-5 z-[200] flex flex-col gap-3 w-[340px]" x-cloak>
+    <template x-for="t in toasts" :key="t.id">
+        <div class="anim-slide card p-4 flex items-start gap-3" :style="`border-left:4px solid ${t.color}`">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0" :style="`background:${t.color}1a; color:${t.color}`">
+                <i :data-lucide="t.icon" class="w-4 h-4" x-init="$nextTick(()=>lucide.createIcons())"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold text-main" x-text="t.title"></p>
+                <p class="text-xs text-muted mt-0.5" x-text="t.msg"></p>
+            </div>
+            <button @click="toasts = toasts.filter(x=>x.id!==t.id)" class="text-muted hover:text-main"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+        </div>
+    </template>
+</div>
+
+<div class="flex h-screen overflow-hidden">
+
+    <!-- ============ SIDEBAR ============ -->
+    <aside :class="sidebarCollapsed ? 'w-[84px]' : 'w-[268px]'"
+           class="hidden md:flex flex-col surface border-r shrink-0 transition-all duration-300 ease-[cubic-bezier(.4,0,.2,1)] relative z-30">
+        <div class="h-[72px] flex items-center px-5 border-b border-subtle">
+            <div class="w-10 h-10 rounded-xl btn-grad flex items-center justify-center shrink-0 shadow-md">
+                <i data-lucide="graduation-cap" class="w-5 h-5 text-white"></i>
+            </div>
+            <div class="ml-3 overflow-hidden transition-all duration-300" :class="sidebarCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'">
+                <p class="font-display font-extrabold text-[15px] leading-tight whitespace-nowrap">MATRÍCULA<span style="color:var(--navy-l)">TPD</span></p>
+                <p class="text-[11px] text-muted whitespace-nowrap">Gestión escolar</p>
+            </div>
+        </div>
+
+        <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+            <template x-for="item in navItems" :key="item.id">
+                <button @click="currentPage = item.id" ripple
+                        class="ripple sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted ring-focus"
+                        :class="currentPage === item.id ? 'active font-semibold' : ''">
+                    <i :data-lucide="item.icon" class="w-[18px] h-[18px] shrink-0"></i>
+                    <span class="whitespace-nowrap overflow-hidden transition-all duration-300" :class="sidebarCollapsed ? 'w-0 opacity-0' : 'opacity-100'" x-text="item.label"></span>
+                    <span x-show="item.badge && !sidebarCollapsed" x-cloak class="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full text-white" style="background:var(--error)" x-text="item.badge"></span>
+                </button>
+            </template>
+        </nav>
+
+        <div class="p-3 border-t border-subtle space-y-1">
+            <button @click="currentPage='configuracion'" class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted">
+                <i data-lucide="settings" class="w-[18px] h-[18px]"></i>
+                <span class="whitespace-nowrap overflow-hidden transition-all duration-300" :class="sidebarCollapsed ? 'w-0 opacity-0' : 'opacity-100'">Configuración</span>
+            </button>
+            <button @click="toast('info','Sesión','Cerrando sesión de forma segura…')" class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium" style="color:var(--error)">
+                <i data-lucide="log-out" class="w-[18px] h-[18px]"></i>
+                <span class="whitespace-nowrap overflow-hidden transition-all duration-300" :class="sidebarCollapsed ? 'w-0 opacity-0' : 'opacity-100'">Cerrar sesión</span>
+            </button>
+
+            <div class="mt-2 p-3 rounded-xl flex items-center gap-2.5" :class="sidebarCollapsed ? 'justify-center' : ''" style="background:var(--bg)">
+                <div class="relative shrink-0">
+                    <div class="w-9 h-9 rounded-full btn-grad flex items-center justify-center text-white text-xs font-bold">MV</div>
+                    <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2" style="background:var(--success); border-color:var(--card)"></span>
+                </div>
+                <div class="overflow-hidden transition-all duration-300" :class="sidebarCollapsed ? 'w-0 opacity-0' : 'opacity-100'">
+                    <p class="text-xs font-semibold whitespace-nowrap">María Vargas</p>
+                    <p class="text-[11px] text-muted whitespace-nowrap">Administradora</p>
+                </div>
+            </div>
+        </div>
+
+        <button @click="sidebarCollapsed = !sidebarCollapsed"
+                class="absolute -right-3 top-[60px] w-6 h-6 rounded-full surface shadow-card flex items-center justify-center ring-focus">
+            <i data-lucide="chevron-left" class="w-3.5 h-3.5 transition-transform duration-300" :class="sidebarCollapsed ? 'rotate-180' : ''"></i>
+        </button>
+    </aside>
+
+    <!-- ============ MOBILE SIDEBAR DRAWER ============ -->
+    <div x-show="mobileMenuOpen" x-cloak class="fixed inset-0 z-40 md:hidden">
+        <div class="absolute inset-0 bg-black/50 anim-fade" @click="mobileMenuOpen=false"></div>
+        <aside class="absolute left-0 top-0 bottom-0 w-[270px] surface anim-slide flex flex-col">
+            <div class="h-[72px] flex items-center justify-between px-5 border-b border-subtle">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl btn-grad flex items-center justify-center"><i data-lucide="graduation-cap" class="w-5 h-5 text-white"></i></div>
+                    <p class="font-display font-extrabold text-sm">MATRÍCULA TPD</p>
+                </div>
+                <button @click="mobileMenuOpen=false"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+                <template x-for="item in navItems" :key="item.id">
+                    <button @click="currentPage = item.id; mobileMenuOpen=false" class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted" :class="currentPage === item.id ? 'active font-semibold' : ''">
+                        <i :data-lucide="item.icon" class="w-[18px] h-[18px]"></i>
+                        <span x-text="item.label"></span>
+                    </button>
+                </template>
+            </nav>
+        </aside>
+    </div>
+
+    <!-- ============ MAIN ============ -->
+    <div class="flex-1 flex flex-col min-w-0">
+
+        <!-- NAVBAR -->
+        <header class="h-[72px] glass border-b border-subtle flex items-center gap-4 px-4 md:px-6 shrink-0 sticky top-0 z-20">
+            <button @click="mobileMenuOpen=true" class="md:hidden"><i data-lucide="menu" class="w-5 h-5"></i></button>
+
+            <div class="hidden lg:flex items-center gap-1.5 text-xs text-muted">
+                <span>MATRÍCULA TPD</span>
+                <i data-lucide="chevron-right" class="w-3 h-3"></i>
+                <span class="text-main font-medium capitalize" x-text="pageLabel(currentPage)"></span>
+            </div>
+
+            <div class="flex-1 max-w-md ml-0 lg:ml-4 relative">
+                <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted"></i>
+                <input type="text" placeholder="Buscar alumnos, aulas, pagos…" class="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm border border-subtle bg-app focus:bg-[var(--card)] ring-focus transition-all" style="background:var(--bg)">
+            </div>
+
+            <div class="flex items-center gap-1.5 md:gap-2 ml-auto">
+                <div class="hidden xl:flex flex-col items-end mr-1.5 leading-tight">
+                    <span class="text-xs font-semibold" x-text="clock"></span>
+                    <span class="text-[10px] text-muted" x-text="today"></span>
+                </div>
+
+                <button class="w-9 h-9 rounded-full hover:bg-[var(--bg)] flex items-center justify-center ring-focus" title="Ayuda">
+                    <i data-lucide="help-circle" class="w-[18px] h-[18px] text-muted"></i>
+                </button>
+
+                <button @click="darkMode = !darkMode" class="w-9 h-9 rounded-full hover:bg-[var(--bg)] flex items-center justify-center ring-focus">
+                    <i :data-lucide="darkMode ? 'sun' : 'moon'" class="w-[18px] h-[18px] text-muted"></i>
+                </button>
+
+                <button class="w-9 h-9 rounded-full hover:bg-[var(--bg)] flex items-center justify-center relative ring-focus">
+                    <i data-lucide="mail" class="w-[18px] h-[18px] text-muted"></i>
+                </button>
+
+                <div class="relative">
+                    <button @click="notifOpen = !notifOpen" class="w-9 h-9 rounded-full hover:bg-[var(--bg)] flex items-center justify-center relative ring-focus">
+                        <i data-lucide="bell" class="w-[18px] h-[18px] text-muted"></i>
+                        <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full pulse-dot" style="background:var(--error)"></span>
+                    </button>
+                    <div x-show="notifOpen" x-cloak @click.outside="notifOpen=false" x-transition class="absolute right-0 mt-2 w-80 card p-2 anim-pop z-50">
+                        <p class="text-xs font-semibold text-muted px-3 py-2">Notificaciones</p>
+                        <template x-for="n in notifications" :key="n.id">
+                            <div class="flex gap-3 px-3 py-2.5 rounded-xl hover:bg-[var(--bg)] cursor-pointer">
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0" :style="`background:${n.color}1a;color:${n.color}`"><i :data-lucide="n.icon" class="w-4 h-4"></i></div>
+                                <div class="min-w-0">
+                                    <p class="text-xs font-medium truncate" x-text="n.title"></p>
+                                    <p class="text-[11px] text-muted truncate" x-text="n.time"></p>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <div class="w-px h-7 bg-[var(--border)] mx-1 hidden sm:block"></div>
+
+                <button class="flex items-center gap-2 pl-1 pr-2.5 py-1 rounded-full hover:bg-[var(--bg)] ring-focus">
+                    <div class="w-8 h-8 rounded-full btn-grad flex items-center justify-center text-white text-xs font-bold">MV</div>
+                    <div class="hidden sm:block text-left leading-tight">
+                        <p class="text-xs font-semibold">María Vargas</p>
+                        <p class="text-[10px] text-muted">Admin</p>
+                    </div>
+                    <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-muted hidden sm:block"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- PAGE CONTENT -->
+        <main class="flex-1 overflow-y-auto dot-grid">
+            <div class="max-w-[1400px] mx-auto p-4 md:p-7">
+
+                <!-- ===================== DASHBOARD ===================== -->
+                <section x-show="currentPage==='dashboard'" x-cloak class="anim-fade">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+                        <div>
+                            <h1 class="font-display text-2xl font-extrabold">Bienvenida, María 👋</h1>
+                            <p class="text-sm text-muted mt-1">Resumen general del periodo escolar 2026</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+              <span class="flex items-center gap-1.5 text-xs text-muted surface px-3 py-1.5 rounded-full">
+                <span class="w-1.5 h-1.5 rounded-full pulse-dot" style="background:var(--success)"></span>
+                Actualizado hace <span x-text="secondsAgo" class="font-semibold text-main">2</span>s
+              </span>
+                            <button @click="refreshDashboard()" class="ripple w-9 h-9 rounded-full surface flex items-center justify-center ring-focus">
+                                <i data-lucide="refresh-cw" class="w-4 h-4" :class="refreshing ? 'animate-spin' : ''"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- KPI CARDS -->
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                        <template x-for="(kpi,i) in kpis" :key="kpi.label">
+                            <div class="card card-hover glow relative p-5 overflow-hidden" :style="`animation-delay:${i*60}ms`">
+                                <div class="absolute -right-6 -top-6 w-24 h-24 rounded-full opacity-10" :style="`background:${kpi.color}`"></div>
+                                <div class="flex items-start justify-between mb-3">
+                                    <div class="w-10 h-10 rounded-xl flex items-center justify-center" :style="`background:${kpi.color}1a;color:${kpi.color}`">
+                                        <i :data-lucide="kpi.icon" class="w-5 h-5"></i>
+                                    </div>
+                                    <span class="flex items-center gap-0.5 text-[11px] font-bold px-2 py-1 rounded-full" :style="kpi.up ? 'color:var(--success);background:#00C85318' : 'color:var(--error);background:#F4433618'">
+                    <i :data-lucide="kpi.up ? 'trending-up' : 'trending-down'" class="w-3 h-3"></i>
+                    <span x-text="kpi.delta"></span>
+                  </span>
+                                </div>
+                                <p class="text-2xl font-extrabold font-display tabular-nums" x-text="kpi.display"></p>
+                                <p class="text-xs text-muted mt-1" x-text="kpi.label"></p>
+                                <div :id="'spark-'+i" class="mt-2 h-8"></div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- CHARTS ROW -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+                        <div class="card p-5 lg:col-span-2">
+                            <div class="flex items-center justify-between mb-1">
+                                <div>
+                                    <p class="font-semibold text-sm">Matrículas e ingresos por mes</p>
+                                    <p class="text-xs text-muted">Año escolar 2026</p>
+                                </div>
+                                <div class="flex gap-1 surface rounded-lg p-1">
+                                    <button class="px-2.5 py-1 text-xs rounded-md font-medium" style="background:var(--navy);color:white">Mes</button>
+                                    <button class="px-2.5 py-1 text-xs rounded-md font-medium text-muted">Trimestre</button>
+                                </div>
+                            </div>
+                            <div id="chartMatriculas" class="mt-2"></div>
+                        </div>
+                        <div class="card p-5">
+                            <p class="font-semibold text-sm mb-1">Distribución por grado</p>
+                            <p class="text-xs text-muted mb-2">Total de alumnos activos</p>
+                            <div id="chartGrado"></div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+                        <div class="card p-5">
+                            <p class="font-semibold text-sm mb-1">Estado de cuotas</p>
+                            <p class="text-xs text-muted mb-3">Periodo actual</p>
+                            <div id="chartCuotas"></div>
+                        </div>
+                        <div class="card p-5 lg:col-span-2">
+                            <p class="font-semibold text-sm mb-1">Capacidad de aulas</p>
+                            <p class="text-xs text-muted mb-2">Ocupación por sección</p>
+                            <div id="chartAulas"></div>
+                        </div>
+                    </div>
+
+                    <!-- ACTIVITY + ONLINE -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        <div class="card p-5 lg:col-span-2">
+                            <p class="font-semibold text-sm mb-4">Actividad reciente</p>
+                            <div class="space-y-1">
+                                <template x-for="a in actividad" :key="a.id">
+                                    <div class="flex items-center gap-3 py-2.5 border-b border-subtle last:border-0">
+                                        <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0" :style="`background:${a.color}1a;color:${a.color}`"><i :data-lucide="a.icon" class="w-4 h-4"></i></div>
+                                        <div class="min-w-0 flex-1">
+                                            <p class="text-xs" x-html="a.text"></p>
+                                        </div>
+                                        <span class="text-[11px] text-muted shrink-0" x-text="a.time"></span>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                        <div class="card p-5">
+                            <p class="font-semibold text-sm mb-1">Usuarios conectados</p>
+                            <p class="text-xs text-muted mb-4">En tiempo real vía WebSocket</p>
+                            <div class="space-y-3">
+                                <template x-for="u in onlineUsers" :key="u.name">
+                                    <div class="flex items-center gap-2.5">
+                                        <div class="relative">
+                                            <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-[11px] font-bold" :style="`background:${u.color}`" x-text="u.initials"></div>
+                                            <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2" style="background:var(--success); border-color:var(--card)"></span>
+                                        </div>
+                                        <div class="min-w-0">
+                                            <p class="text-xs font-medium truncate" x-text="u.name"></p>
+                                            <p class="text-[10px] text-muted truncate" x-text="u.role"></p>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ===================== MATRÍCULAS (STEPPER) ===================== -->
+                <section x-show="currentPage==='matriculas'" x-cloak class="anim-fade">
+                    <h1 class="font-display text-2xl font-extrabold mb-1">Nueva matrícula</h1>
+                    <p class="text-sm text-muted mb-6">Sigue los pasos para registrar una matrícula completa</p>
+
+                    <!-- Stepper header -->
+                    <div class="flex items-center mb-8 max-w-2xl">
+                        <template x-for="(s,idx) in steps" :key="s">
+                            <div class="flex items-center" :class="idx < steps.length-1 ? 'flex-1' : ''">
+                                <div class="flex flex-col items-center">
+                                    <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300"
+                                         :style="stepIndex > idx ? 'background:var(--success);color:white' : (stepIndex===idx ? 'background:var(--navy);color:white;box-shadow:0 0 0 5px rgba(57,73,171,.15)' : 'background:var(--bg);color:var(--text-2);border:1px solid var(--border)')">
+                                        <i x-show="stepIndex > idx" data-lucide="check" class="w-4 h-4"></i>
+                                        <span x-show="stepIndex <= idx" x-text="idx+1"></span>
+                                    </div>
+                                    <span class="text-[11px] mt-2 font-medium text-center w-20" :class="stepIndex>=idx ? 'text-main' : 'text-muted'" x-text="s"></span>
+                                </div>
+                                <div x-show="idx < steps.length-1" class="flex-1 h-[2px] mx-2 -mt-5 transition-all duration-300" :style="stepIndex > idx ? 'background:var(--success)' : 'background:var(--border)'"></div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- STEP 1: Buscar alumno -->
+                    <div x-show="stepIndex===0" class="anim-fade card p-6 max-w-2xl">
+                        <p class="font-semibold mb-1">Buscar alumno</p>
+                        <p class="text-xs text-muted mb-4">Busca por DNI, nombre o código de estudiante</p>
+                        <div class="relative mb-4">
+                            <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted"></i>
+                            <input x-model="searchAlumno" type="text" placeholder="Ej. 72849501 o Sofía Ramírez" class="w-full pl-10 pr-4 py-3 rounded-xl border border-subtle ring-focus text-sm" style="background:var(--bg)">
+                        </div>
+                        <div class="space-y-2">
+                            <template x-for="al in filteredAlumnos" :key="al.dni">
+                                <button @click="selectedAlumno = al; stepIndex=1; toast('success','Alumno seleccionado', al.nombre+' fue encontrado correctamente')"
+                                        class="w-full flex items-center gap-3 p-3 rounded-xl border border-subtle hover:border-[var(--navy-l)] hover:bg-[var(--bg)] transition-all text-left ring-focus">
+                                    <div class="w-10 h-10 rounded-full btn-grad flex items-center justify-center text-white text-xs font-bold shrink-0" x-text="al.iniciales"></div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-semibold truncate" x-text="al.nombre"></p>
+                                        <p class="text-xs text-muted" x-text="'DNI '+al.dni+' · Código '+al.codigo"></p>
+                                    </div>
+                                    <span class="text-[11px] font-medium px-2 py-1 rounded-full" style="background:#03A9F418;color:var(--info)" x-text="al.gradoPrevio"></span>
+                                </button>
+                            </template>
+                            <p x-show="filteredAlumnos.length===0" class="text-center text-sm text-muted py-6">No se encontraron alumnos con ese criterio.</p>
+                        </div>
+                    </div>
+
+                    <!-- STEP 2: Seleccionar aula -->
+                    <div x-show="stepIndex===1" class="anim-fade">
+                        <div class="card p-4 mb-4 flex items-center gap-3 max-w-3xl">
+                            <div class="w-10 h-10 rounded-full btn-grad flex items-center justify-center text-white text-xs font-bold" x-text="selectedAlumno?.iniciales"></div>
+                            <div class="flex-1">
+                                <p class="text-sm font-semibold" x-text="selectedAlumno?.nombre"></p>
+                                <p class="text-xs text-muted">Selecciona el aula donde será matriculado</p>
+                            </div>
+                            <button @click="stepIndex=0" class="text-xs font-medium" style="color:var(--navy-l)">Cambiar</button>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl">
+                            <template x-for="aula in aulas" :key="aula.id">
+                                <button @click="aula.disponibles>0 && (selectedAula=aula, stepIndex=2)"
+                                        class="card p-4 text-left transition-all duration-250 relative overflow-hidden"
+                                        :class="aula.disponibles>0 ? 'card-hover ring-focus cursor-pointer' : 'opacity-60 cursor-not-allowed'">
+                                    <div class="flex items-start justify-between mb-3">
+                                        <div>
+                                            <p class="font-semibold text-sm" x-text="aula.nivel+' · '+aula.grado+aula.seccion"></p>
+                                            <p class="text-xs text-muted" x-text="'Tutor: '+aula.tutor"></p>
+                                        </div>
+                                        <span class="w-2.5 h-2.5 rounded-full mt-1" :style="`background:${aulaColor(aula)}`"></span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-xs mb-1.5">
+                                        <span class="text-muted">Capacidad</span>
+                                        <span class="font-semibold" x-text="aula.matriculados+' / '+aula.capacidad"></span>
+                                    </div>
+                                    <div class="w-full h-2 rounded-full overflow-hidden" style="background:var(--border)">
+                                        <div class="h-full rounded-full transition-all duration-700" :style="`width:${(aula.matriculados/aula.capacidad*100)}%;background:${aulaColor(aula)}`"></div>
+                                    </div>
+                                    <div class="flex items-center justify-between mt-3">
+                                        <span class="text-[11px] font-medium px-2 py-0.5 rounded-full" :style="`background:${aulaColor(aula)}1a;color:${aulaColor(aula)}`" x-text="aula.disponibles>0 ? aula.disponibles+' disponibles' : 'Aula llena'"></span>
+                                        <i data-lucide="arrow-right" class="w-4 h-4 text-muted"></i>
+                                    </div>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- STEP 3: Resumen -->
+                    <div x-show="stepIndex===2" class="anim-fade max-w-2xl">
+                        <div class="card p-6">
+                            <p class="font-semibold mb-4">Resumen de matrícula</p>
+                            <div class="flex items-center gap-4 p-4 rounded-xl mb-4" style="background:var(--bg)">
+                                <div class="w-14 h-14 rounded-full btn-grad flex items-center justify-center text-white font-bold" x-text="selectedAlumno?.iniciales"></div>
+                                <div>
+                                    <p class="font-semibold text-sm" x-text="selectedAlumno?.nombre"></p>
+                                    <p class="text-xs text-muted" x-text="'DNI '+selectedAlumno?.dni"></p>
+                                </div>
+                            </div>
+                            <div class="space-y-3 text-sm">
+                                <div class="flex justify-between py-2 border-b border-subtle"><span class="text-muted">Aula asignada</span><span class="font-medium" x-text="selectedAula ? selectedAula.nivel+' · '+selectedAula.grado+selectedAula.seccion : ''"></span></div>
+                                <div class="flex justify-between py-2 border-b border-subtle"><span class="text-muted">Tutor</span><span class="font-medium" x-text="selectedAula?.tutor"></span></div>
+                                <div class="flex justify-between py-2 border-b border-subtle"><span class="text-muted">Fecha de matrícula</span><span class="font-medium" x-text="today"></span></div>
+                                <div class="flex justify-between py-2"><span class="text-muted">Costo de matrícula</span><span class="font-bold text-base" style="color:var(--navy-l)">S/ 350.00</span></div>
+                            </div>
+                            <button @click="finalizarMatricula()" :disabled="matriculaSuccess" class="ripple btn-grad w-full mt-6 py-3 rounded-xl text-white text-sm font-semibold ring-focus">
+                                <span x-show="!matriculaSuccess">Finalizar matrícula</span>
+                                <span x-show="matriculaSuccess" class="flex items-center justify-center gap-2"><i data-lucide="check-circle" class="w-4 h-4"></i> ¡Matrícula completada!</span>
+                            </button>
+                        </div>
+
+                        <div x-show="matriculaSuccess" x-cloak class="anim-success card p-6 mt-4 text-center">
+                            <div class="w-16 h-16 rounded-full mx-auto flex items-center justify-center mb-3" style="background:#00C85318">
+                                <i data-lucide="party-popper" class="w-8 h-8" style="color:var(--success)"></i>
+                            </div>
+                            <p class="font-semibold">¡Todo listo! Matrícula registrada con éxito.</p>
+                            <p class="text-xs text-muted mt-1">Se generaron automáticamente las cuotas del periodo.</p>
+                            <button @click="resetMatricula()" class="mt-4 text-sm font-medium" style="color:var(--navy-l)">Registrar otra matrícula</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ===================== ALUMNOS ===================== -->
+                <section x-show="currentPage==='alumnos'" x-cloak class="anim-fade">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+                        <div><h1 class="font-display text-2xl font-extrabold">Alumnos</h1><p class="text-sm text-muted mt-1">Gestiona la información de los estudiantes</p></div>
+                        <button class="ripple btn-grad text-white text-sm font-semibold px-4 py-2.5 rounded-xl flex items-center gap-2 ring-focus"><i data-lucide="plus" class="w-4 h-4"></i> Nuevo alumno</button>
+                    </div>
+                    <div class="card overflow-hidden">
+                        <div class="p-4 flex flex-wrap items-center gap-2 border-b border-subtle">
+                            <div class="relative flex-1 min-w-[200px]">
+                                <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted"></i>
+                                <input placeholder="Buscar alumno…" class="w-full pl-9 pr-3 py-2 rounded-lg border border-subtle text-sm ring-focus" style="background:var(--bg)">
+                            </div>
+                            <button class="flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg border border-subtle"><i data-lucide="filter" class="w-3.5 h-3.5"></i>Filtros</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead><tr class="text-left text-xs text-muted border-b border-subtle">
+                                    <th class="px-4 py-3 font-medium">Alumno</th><th class="px-4 py-3 font-medium">DNI</th><th class="px-4 py-3 font-medium">Grado</th><th class="px-4 py-3 font-medium">Apoderado</th><th class="px-4 py-3 font-medium">Estado</th><th class="px-4 py-3 font-medium"></th>
+                                </tr></thead>
+                                <tbody>
+                                <template x-for="al in alumnos" :key="al.dni">
+                                    <tr class="border-b border-subtle last:border-0 hover:bg-[var(--bg)] transition-colors">
+                                        <td class="px-4 py-3 flex items-center gap-2.5">
+                                            <div class="w-8 h-8 rounded-full btn-grad flex items-center justify-center text-white text-[11px] font-bold" x-text="al.iniciales"></div>
+                                            <span class="font-medium" x-text="al.nombre"></span>
+                                        </td>
+                                        <td class="px-4 py-3 text-muted" x-text="al.dni"></td>
+                                        <td class="px-4 py-3" x-text="al.gradoPrevio"></td>
+                                        <td class="px-4 py-3 text-muted" x-text="al.apoderado"></td>
+                                        <td class="px-4 py-3"><span class="text-[11px] font-medium px-2 py-1 rounded-full" style="background:#00C85318;color:var(--success)">Activo</span></td>
+                                        <td class="px-4 py-3 text-right"><button class="text-muted hover:text-main"><i data-lucide="more-vertical" class="w-4 h-4"></i></button></td>
+                                    </tr>
+                                </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ===================== AULAS ===================== -->
+                <section x-show="currentPage==='aulas'" x-cloak class="anim-fade">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+                        <div><h1 class="font-display text-2xl font-extrabold">Aulas</h1><p class="text-sm text-muted mt-1">Disponibilidad actualizada en tiempo real</p></div>
+                        <button class="ripple btn-grad text-white text-sm font-semibold px-4 py-2.5 rounded-xl flex items-center gap-2 ring-focus"><i data-lucide="plus" class="w-4 h-4"></i> Nueva aula</button>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <template x-for="aula in aulas" :key="aula.id">
+                            <div class="card card-hover p-5">
+                                <div class="flex items-start justify-between mb-3">
+                                    <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:#3949AB18;color:var(--navy-l)"><i data-lucide="school" class="w-5 h-5"></i></div>
+                                    <span class="text-[11px] font-medium px-2 py-1 rounded-full" :style="`background:${aulaColor(aula)}1a;color:${aulaColor(aula)}`" x-text="aula.disponibles>0 ? 'Disponible' : 'Llena'"></span>
+                                </div>
+                                <p class="font-semibold text-sm" x-text="aula.nivel+' · '+aula.grado+aula.seccion"></p>
+                                <p class="text-xs text-muted mb-3" x-text="'Tutor: '+aula.tutor"></p>
+                                <div class="flex items-center justify-between text-xs mb-1.5"><span class="text-muted">Ocupación</span><span class="font-semibold" x-text="aula.matriculados+'/'+aula.capacidad"></span></div>
+                                <div class="w-full h-2 rounded-full overflow-hidden" style="background:var(--border)"><div class="h-full rounded-full" :style="`width:${(aula.matriculados/aula.capacidad*100)}%;background:${aulaColor(aula)}`"></div></div>
+                            </div>
+                        </template>
+                    </div>
+                </section>
+
+                <!-- ===================== PAGOS ===================== -->
+                <section x-show="currentPage==='pagos'" x-cloak class="anim-fade">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+                        <div><h1 class="font-display text-2xl font-extrabold">Pagos</h1><p class="text-sm text-muted mt-1">Historial y gestión de cuotas</p></div>
+                        <div class="flex gap-2">
+                            <button class="flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg border border-subtle"><i data-lucide="file-down" class="w-3.5 h-3.5"></i>Excel</button>
+                            <button class="flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg border border-subtle"><i data-lucide="printer" class="w-3.5 h-3.5"></i>Imprimir</button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
+                        <template x-for="c in cuotasResumen" :key="c.label">
+                            <div class="card p-4 flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl flex items-center justify-center" :style="`background:${c.color}1a;color:${c.color}`"><i :data-lucide="c.icon" class="w-5 h-5"></i></div>
+                                <div><p class="text-lg font-extrabold font-display" x-text="c.value"></p><p class="text-xs text-muted" x-text="c.label"></p></div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <div class="card overflow-hidden">
+                        <div class="p-4 flex flex-wrap gap-2 items-center border-b border-subtle">
+                            <div class="relative flex-1 min-w-[200px]">
+                                <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted"></i>
+                                <input placeholder="Buscar por alumno o concepto…" class="w-full pl-9 pr-3 py-2 rounded-lg border border-subtle text-sm ring-focus" style="background:var(--bg)">
+                            </div>
+                            <button class="flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg border border-subtle"><i data-lucide="filter" class="w-3.5 h-3.5"></i>Filtros</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead><tr class="text-left text-xs text-muted border-b border-subtle">
+                                    <th class="px-4 py-3 font-medium">Alumno</th><th class="px-4 py-3 font-medium">Concepto</th><th class="px-4 py-3 font-medium">Monto</th><th class="px-4 py-3 font-medium">Vencimiento</th><th class="px-4 py-3 font-medium">Estado</th><th class="px-4 py-3 font-medium"></th>
+                                </tr></thead>
+                                <tbody>
+                                <template x-for="p in pagos" :key="p.id">
+                                    <tr class="border-b border-subtle last:border-0 hover:bg-[var(--bg)]">
+                                        <td class="px-4 py-3 font-medium" x-text="p.alumno"></td>
+                                        <td class="px-4 py-3 text-muted" x-text="p.concepto"></td>
+                                        <td class="px-4 py-3 font-semibold" x-text="'S/ '+p.monto.toFixed(2)"></td>
+                                        <td class="px-4 py-3 text-muted" x-text="p.fecha"></td>
+                                        <td class="px-4 py-3">
+                                            <span class="text-[11px] font-medium px-2 py-1 rounded-full" :style="estadoStyle(p.estado)" x-text="p.estado"></span>
+                                        </td>
+                                        <td class="px-4 py-3 text-right">
+                                            <button x-show="p.estado!=='Pagado'" @click="openPago(p)" class="ripple btn-grad text-white text-xs font-semibold px-3 py-1.5 rounded-lg ring-focus">Procesar</button>
+                                            <i x-show="p.estado==='Pagado'" data-lucide="check-circle" class="w-4 h-4 ml-auto" style="color:var(--success)"></i>
+                                        </td>
+                                    </tr>
+                                </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ===================== REPORTES ===================== -->
+                <section x-show="currentPage==='reportes'" x-cloak class="anim-fade">
+                    <h1 class="font-display text-2xl font-extrabold mb-1">Reportes</h1>
+                    <p class="text-sm text-muted mb-6">Genera y exporta reportes del sistema</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <template x-for="r in reportes" :key="r.title">
+                            <div class="card card-hover p-5">
+                                <div class="w-11 h-11 rounded-xl flex items-center justify-center mb-3" :style="`background:${r.color}1a;color:${r.color}`"><i :data-lucide="r.icon" class="w-5 h-5"></i></div>
+                                <p class="font-semibold text-sm mb-1" x-text="r.title"></p>
+                                <p class="text-xs text-muted mb-4" x-text="r.desc"></p>
+                                <div class="flex gap-2">
+                                    <button class="text-xs font-medium px-3 py-1.5 rounded-lg border border-subtle flex items-center gap-1"><i data-lucide="eye" class="w-3 h-3"></i>Vista previa</button>
+                                    <button class="text-xs font-medium px-3 py-1.5 rounded-lg" style="background:var(--navy);color:white">PDF</button>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </section>
+
+                <!-- ===================== PERFIL ===================== -->
+                <section x-show="currentPage==='perfil'" x-cloak class="anim-fade max-w-3xl">
+                    <h1 class="font-display text-2xl font-extrabold mb-6">Mi perfil</h1>
+                    <div class="card p-6 mb-4 flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left">
+                        <div class="w-20 h-20 rounded-full btn-grad flex items-center justify-center text-white text-2xl font-bold shrink-0">MV</div>
+                        <div class="flex-1">
+                            <p class="font-semibold text-lg">María Vargas</p>
+                            <p class="text-sm text-muted">maria.vargas@matriculatpd.edu.pe · Administradora</p>
+                            <p class="text-xs text-muted mt-1">Último acceso: hoy a las <span x-text="clock"></span></p>
+                        </div>
+                        <button class="text-sm font-medium px-4 py-2 rounded-xl border border-subtle">Cambiar foto</button>
+                    </div>
+                    <div class="card p-6">
+                        <p class="font-semibold mb-4 text-sm">Información de la cuenta</p>
+                        <div class="grid sm:grid-cols-2 gap-4">
+                            <div><label class="text-xs text-muted">Nombre completo</label><input value="María Vargas" class="w-full mt-1 px-3 py-2.5 rounded-xl border border-subtle text-sm ring-focus" style="background:var(--bg)"></div>
+                            <div><label class="text-xs text-muted">Correo electrónico</label><input value="maria.vargas@matriculatpd.edu.pe" class="w-full mt-1 px-3 py-2.5 rounded-xl border border-subtle text-sm ring-focus" style="background:var(--bg)"></div>
+                            <div><label class="text-xs text-muted">Rol</label><input value="Administradora" disabled class="w-full mt-1 px-3 py-2.5 rounded-xl border border-subtle text-sm opacity-60" style="background:var(--bg)"></div>
+                            <div><label class="text-xs text-muted">Teléfono</label><input value="+51 987 654 321" class="w-full mt-1 px-3 py-2.5 rounded-xl border border-subtle text-sm ring-focus" style="background:var(--bg)"></div>
+                        </div>
+                        <button @click="toast('success','Perfil actualizado','Tus cambios se guardaron correctamente')" class="ripple btn-grad text-white text-sm font-semibold px-5 py-2.5 rounded-xl mt-5 ring-focus">Guardar cambios</button>
+                    </div>
+                </section>
+
+                <!-- ===================== CONFIGURACIÓN ===================== -->
+                <section x-show="currentPage==='configuracion'" x-cloak class="anim-fade max-w-2xl">
+                    <h1 class="font-display text-2xl font-extrabold mb-6">Configuración</h1>
+                    <div class="card p-6 space-y-5">
+                        <div class="flex items-center justify-between">
+                            <div><p class="text-sm font-medium">Modo oscuro</p><p class="text-xs text-muted">Cambia la apariencia de toda la plataforma</p></div>
+                            <button @click="darkMode=!darkMode" class="w-12 h-7 rounded-full transition-colors relative" :style="darkMode ? 'background:var(--navy)' : 'background:var(--border)'">
+                                <span class="absolute top-1 w-5 h-5 rounded-full bg-white transition-all duration-300" :style="darkMode ? 'left:26px' : 'left:4px'"></span>
+                            </button>
+                        </div>
+                        <div class="flex items-center justify-between border-t border-subtle pt-5">
+                            <div><p class="text-sm font-medium">Notificaciones por correo</p><p class="text-xs text-muted">Recibe alertas de pagos y matrículas</p></div>
+                            <button @click="emailNotif=!emailNotif" class="w-12 h-7 rounded-full transition-colors relative" :style="emailNotif ? 'background:var(--navy)' : 'background:var(--border)'">
+                                <span class="absolute top-1 w-5 h-5 rounded-full bg-white transition-all duration-300" :style="emailNotif ? 'left:26px' : 'left:4px'"></span>
+                            </button>
+                        </div>
+                        <div class="flex items-center justify-between border-t border-subtle pt-5">
+                            <div><p class="text-sm font-medium">Autenticación de dos factores</p><p class="text-xs text-muted">Mayor seguridad para tu cuenta (JWT + OTP)</p></div>
+                            <button @click="twoFA=!twoFA" class="w-12 h-7 rounded-full transition-colors relative" :style="twoFA ? 'background:var(--navy)' : 'background:var(--border)'">
+                                <span class="absolute top-1 w-5 h-5 rounded-full bg-white transition-all duration-300" :style="twoFA ? 'left:26px' : 'left:4px'"></span>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- ============ MODAL: PROCESAR PAGO ============ -->
+<div x-show="showPagoModal" x-cloak class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/50 anim-fade" @click="showPagoModal=false"></div>
+    <div class="relative card glass w-full max-w-md p-6 anim-pop">
+        <div class="flex items-center justify-between mb-4">
+            <p class="font-semibold">Procesar pago</p>
+            <button @click="showPagoModal=false"><i data-lucide="x" class="w-4 h-4 text-muted"></i></button>
+        </div>
+        <template x-if="activePago">
+            <div>
+                <div class="flex justify-between text-sm py-2 border-b border-subtle"><span class="text-muted">Alumno</span><span class="font-medium" x-text="activePago.alumno"></span></div>
+                <div class="flex justify-between text-sm py-2 border-b border-subtle"><span class="text-muted">Concepto</span><span class="font-medium" x-text="activePago.concepto"></span></div>
+                <div class="flex justify-between text-sm py-2 border-b border-subtle"><span class="text-muted">Monto a pagar</span><span class="font-bold text-base" style="color:var(--navy-l)" x-text="'S/ '+activePago.monto.toFixed(2)"></span></div>
+                <label class="text-xs text-muted block mt-4 mb-1.5">Método de pago</label>
+                <select class="w-full px-3 py-2.5 rounded-xl border border-subtle text-sm ring-focus" style="background:var(--bg)">
+                    <option>Tarjeta de crédito/débito</option><option>Transferencia bancaria</option><option>Efectivo</option><option>Yape / Plin</option>
+                </select>
+                <button @click="confirmarPago()" class="ripple btn-grad w-full mt-5 py-3 rounded-xl text-white text-sm font-semibold ring-focus">Confirmar pago</button>
+            </div>
+        </template>
+    </div>
+</div>
+
+<script>
+    function appData(){
+      return {
+        darkMode:false, sidebarCollapsed:false, mobileMenuOpen:false, notifOpen:false,
+        currentPage:'dashboard', clock:'', today:'', secondsAgo:2, refreshing:false,
+        toasts:[], toastId:0,
+        stepIndex:0, steps:['Buscar alumno','Seleccionar aula','Resumen'],
+        searchAlumno:'', selectedAlumno:null, selectedAula:null, matriculaSuccess:false,
+        showPagoModal:false, activePago:null,
+        emailNotif:true, twoFA:false,
+
+        navItems:[
+          {id:'dashboard', label:'Dashboard', icon:'home'},
+          {id:'matriculas', label:'Matrículas', icon:'graduation-cap'},
+          {id:'alumnos', label:'Alumnos', icon:'users'},
+          {id:'aulas', label:'Aulas', icon:'school'},
+          {id:'pagos', label:'Pagos', icon:'credit-card', badge:'4'},
+          {id:'reportes', label:'Reportes', icon:'bar-chart-3'},
+          {id:'perfil', label:'Perfil', icon:'user'},
+        ],
+
+        notifications:[
+          {id:1, title:'Pago recibido de Sofía Ramírez', time:'Hace 3 min', icon:'check-circle', color:'#00C853'},
+          {id:2, title:'Aula 3°B alcanzó el 90% de capacidad', time:'Hace 18 min', icon:'alert-triangle', color:'#FF9800'},
+          {id:3, title:'Nueva matrícula registrada', time:'Hace 1 h', icon:'graduation-cap', color:'#3949AB'},
+        ],
+
+        alumnos:[
+          {dni:'72849501', nombre:'Sofía Ramírez Castillo', codigo:'TPD-0231', iniciales:'SR', gradoPrevio:'5° Primaria', apoderado:'Luis Ramírez'},
+          {dni:'70124488', nombre:'Mateo Quispe Fernández', codigo:'TPD-0455', iniciales:'MQ', gradoPrevio:'3° Secundaria', apoderado:'Rosa Fernández'},
+          {dni:'74455120', nombre:'Valentina Torres Lujan', codigo:'TPD-0512', iniciales:'VT', gradoPrevio:'1° Secundaria', apoderado:'Jorge Torres'},
+          {dni:'71983340', nombre:'Diego Salazar Mendoza', codigo:'TPD-0398', iniciales:'DS', gradoPrevio:'6° Primaria', apoderado:'Karen Mendoza'},
+          {dni:'73120044', nombre:'Camila Huamán Rojas', codigo:'TPD-0287', iniciales:'CH', gradoPrevio:'4° Primaria', apoderado:'Pedro Huamán'},
+        ],
+
+        aulas:[
+          {id:1, nivel:'Primaria', grado:'5°', seccion:'A', tutor:'Prof. Ana Cárdenas', capacidad:30, matriculados:28, disponibles:2},
+          {id:2, nivel:'Primaria', grado:'5°', seccion:'B', tutor:'Prof. Marco Díaz', capacidad:30, matriculados:30, disponibles:0},
+          {id:3, nivel:'Secundaria', grado:'1°', seccion:'A', tutor:'Prof. Lucía Vega', capacidad:32, matriculados:19, disponibles:13},
+          {id:4, nivel:'Secundaria', grado:'3°', seccion:'C', tutor:'Prof. Raúl Ponce', capacidad:32, matriculados:24, disponibles:8},
+          {id:5, nivel:'Primaria', grado:'6°', seccion:'A', tutor:'Prof. Diana Soto', capacidad:30, matriculados:26, disponibles:4},
+          {id:6, nivel:'Primaria', grado:'4°', seccion:'B', tutor:'Prof. Hugo Ríos', capacidad:30, matriculados:30, disponibles:0},
+        ],
+
+        pagos:[
+          {id:1, alumno:'Sofía Ramírez', concepto:'Pensión - Junio', monto:380, fecha:'05/06/2026', estado:'Pagado'},
+          {id:2, alumno:'Mateo Quispe', concepto:'Pensión - Junio', monto:420, fecha:'05/06/2026', estado:'Pendiente'},
+          {id:3, alumno:'Valentina Torres', concepto:'Matrícula 2026', monto:350, fecha:'30/06/2026', estado:'Vencido'},
+          {id:4, alumno:'Diego Salazar', concepto:'Pensión - Mayo', monto:380, fecha:'05/05/2026', estado:'Pagado'},
+          {id:5, alumno:'Camila Huamán', concepto:'Pensión - Junio', monto:380, fecha:'05/06/2026', estado:'Pendiente'},
+        ],
+        cuotasResumen:[
+          {label:'Cobrado este mes', value:'S/ 24,380', icon:'check-circle', color:'#00C853'},
+          {label:'Pendiente', value:'S/ 4,260', icon:'clock', color:'#FF9800'},
+          {label:'Vencido', value:'S/ 350', icon:'alert-triangle', color:'#F44336'},
+        ],
+
+        reportes:[
+          {title:'Reporte de matrículas', desc:'Detalle de matrículas por periodo y grado', icon:'graduation-cap', color:'#3949AB'},
+          {title:'Reporte de pagos', desc:'Historial de pagos procesados', icon:'credit-card', color:'#00C853'},
+          {title:'Reporte de ingresos', desc:'Ingresos consolidados mensuales', icon:'trending-up', color:'#03A9F4'},
+          {title:'Reporte por aula', desc:'Ocupación y disponibilidad de aulas', icon:'school', color:'#FF9800'},
+          {title:'Reporte por grado', desc:'Distribución de alumnos por grado', icon:'bar-chart-3', color:'#1A237E'},
+          {title:'Reporte de auditoría', desc:'Registro de acciones del sistema', icon:'shield-check', color:'#F44336'},
+        ],
+
+        actividad:[
+          {id:1, icon:'graduation-cap', color:'#3949AB', text:'<b>Sofía Ramírez</b> fue matriculada en <b>5°A Primaria</b>', time:'Hace 4 min'},
+          {id:2, icon:'credit-card', color:'#00C853', text:'Pago recibido de <b>Mateo Quispe</b> · S/ 420.00', time:'Hace 12 min'},
+          {id:3, icon:'alert-triangle', color:'#FF9800', text:'El aula <b>5°B</b> alcanzó su capacidad máxima', time:'Hace 25 min'},
+          {id:4, icon:'user-plus', color:'#03A9F4', text:'Nuevo usuario <b>Prof. Hugo Ríos</b> fue registrado', time:'Hace 1 h'},
+        ],
+
+        onlineUsers:[
+          {name:'Ana Cárdenas', role:'Docente · 5°A', initials:'AC', color:'#3949AB'},
+          {name:'Marco Díaz', role:'Docente · 5°B', initials:'MD', color:'#00C853'},
+          {name:'Rosa Paredes', role:'Secretaría', initials:'RP', color:'#FF9800'},
+          {name:'Hugo Ríos', role:'Docente · 4°B', initials:'HR', color:'#03A9F4'},
+        ],
+
+        kpis:[],
+
+        get filteredAlumnos(){
+          const q = this.searchAlumno.toLowerCase().trim();
+          if(!q) return this.alumnos;
+          return this.alumnos.filter(a => a.nombre.toLowerCase().includes(q) || a.dni.includes(q) || a.codigo.toLowerCase().includes(q));
+        },
+
+        pageLabel(id){
+          const m = {dashboard:'Dashboard', matriculas:'Matrículas', alumnos:'Alumnos', aulas:'Aulas', pagos:'Pagos', reportes:'Reportes', perfil:'Perfil', configuracion:'Configuración'};
+          return m[id] || id;
+        },
+
+        aulaColor(aula){
+          const pct = aula.matriculados/aula.capacidad;
+          if(pct >= 1) return '#F44336';
+          if(pct >= 0.85) return '#FF9800';
+          return '#00C853';
+        },
+
+        estadoStyle(estado){
+          const map = {Pagado:'background:#00C85318;color:#00C853', Pendiente:'background:#FF980018;color:#FF9800', Vencido:'background:#F4433618;color:#F44336'};
+          return map[estado] || '';
+        },
+
+        toast(type,title,msg){
+          const colors = {success:'#00C853', warning:'#FF9800', error:'#F44336', info:'#03A9F4'};
+          const icons = {success:'check-circle', warning:'alert-triangle', error:'x-circle', info:'info'};
+          const id = ++this.toastId;
+          this.toasts.push({id, title, msg, color:colors[type], icon:icons[type]});
+          setTimeout(()=>{ this.toasts = this.toasts.filter(t=>t.id!==id); }, 4500);
+          this.$nextTick(()=>lucide.createIcons());
+        },
+
+        openPago(p){ this.activePago = p; this.showPagoModal = true; },
+        confirmarPago(){
+          this.activePago.estado = 'Pagado';
+          this.showPagoModal = false;
+          this.toast('success','Pago procesado', 'El pago de '+this.activePago.alumno+' se registró correctamente');
+        },
+
+        finalizarMatricula(){
+          this.matriculaSuccess = true;
+          this.toast('success','Matrícula finalizada', 'Se generaron las cuotas automáticamente');
+        },
+        resetMatricula(){
+          this.stepIndex=0; this.selectedAlumno=null; this.selectedAula=null; this.matriculaSuccess=false; this.searchAlumno='';
+        },
+
+        refreshDashboard(){
+          this.refreshing = true;
+          this.secondsAgo = 0;
+          setTimeout(()=>{ this.refreshing=false; this.toast('info','Datos actualizados','El dashboard se sincronizó vía WebSocket'); }, 900);
+        },
+
+        updateClock(){
+          const d = new Date();
+          this.clock = d.toLocaleTimeString('es-PE', {hour:'2-digit', minute:'2-digit'});
+          this.today = d.toLocaleDateString('es-PE', {day:'2-digit', month:'long', year:'numeric'});
+        },
+
+        initKpis(){
+          this.kpis = [
+            {label:'Total alumnos', display:'1,248', delta:'+4.2%', up:true, icon:'users', color:'#1A237E'},
+            {label:'Total aulas', display:'42', delta:'+1.0%', up:true, icon:'school', color:'#3949AB'},
+            {label:'Matrículas hoy', display:'18', delta:'+12%', up:true, icon:'graduation-cap', color:'#00C853'},
+            {label:'Ingresos del mes', display:'S/ 86,420', delta:'+6.8%', up:true, icon:'dollar-sign', color:'#03A9F4'},
+            {label:'Cuotas pendientes', display:'S/ 4,260', delta:'-3.1%', up:false, icon:'clock', color:'#FF9800'},
+            {label:'Pagos del mes', display:'392', delta:'+9.4%', up:true, icon:'credit-card', color:'#00C853'},
+            {label:'Docentes activos', display:'56', delta:'+0.5%', up:true, icon:'book-open', color:'#1A237E'},
+            {label:'Usuarios conectados', display:'14', delta:'+2', up:true, icon:'wifi', color:'#03A9F4'},
+          ];
+        },
+
+        initCharts(){
+          const textColor = getComputedStyle(document.body).getPropertyValue('--text-2').trim() || '#64748B';
+          const gridColor = getComputedStyle(document.body).getPropertyValue('--border').trim() || '#E6EBF3';
+          const baseFont = 'Inter, sans-serif';
+
+          // KPI sparklines
+          const sparkData = [
+            [4,7,5,9,8,12,10,14],[2,3,3,4,4,5,5,6],[3,5,4,8,6,9,12,18],[60,70,65,80,75,90,88,98],
+            [9,7,8,6,5,4,4,3],[300,320,310,350,340,370,360,392],[50,51,52,53,54,55,55,56],[8,9,10,9,11,12,13,14]
+          ];
+          const sparkColors = ['#1A237E','#3949AB','#00C853','#03A9F4','#FF9800','#00C853','#1A237E','#03A9F4'];
+          sparkData.forEach((d,i)=>{
+            new ApexCharts(document.querySelector('#spark-'+i), {
+              chart:{type:'area', height:32, sparkline:{enabled:true}, animations:{enabled:true, speed:600}},
+              series:[{data:d}], stroke:{width:2, curve:'smooth'}, fill:{type:'gradient', gradient:{opacityFrom:.35, opacityTo:0}},
+              colors:[sparkColors[i]], tooltip:{enabled:false}
+            }).render();
+          });
+
+          new ApexCharts(document.querySelector('#chartMatriculas'), {
+            chart:{type:'area', height:300, toolbar:{show:false}, fontFamily:baseFont, animations:{enabled:true, speed:700}},
+            series:[{name:'Matrículas', data:[80,95,70,110,130,98,140,150,120,160,145,170]},{name:'Ingresos (miles S/)', data:[40,50,38,58,68,52,72,80,64,84,76,90]}],
+            xaxis:{categories:['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'], labels:{style:{colors:textColor, fontSize:'11px'}}, axisBorder:{show:false}, axisTicks:{show:false}},
+            yaxis:{labels:{style:{colors:textColor, fontSize:'11px'}}},
+            grid:{borderColor:gridColor, strokeDashArray:4},
+            colors:['#3949AB','#00C853'], stroke:{width:2.5, curve:'smooth'},
+            fill:{type:'gradient', gradient:{opacityFrom:.28, opacityTo:0}},
+            legend:{position:'top', horizontalAlign:'right', labels:{colors:textColor}, fontSize:'12px'},
+            dataLabels:{enabled:false},
+          }).render();
+
+          new ApexCharts(document.querySelector('#chartGrado'), {
+            chart:{type:'donut', height:280, fontFamily:baseFont},
+            series:[320,295,280,210,143], labels:['Inicial','1°-2° Prim.','3°-4° Prim.','5°-6° Prim.','Secundaria'],
+            colors:['#1A237E','#3949AB','#00C853','#03A9F4','#FF9800'],
+            legend:{position:'bottom', labels:{colors:textColor}, fontSize:'11px'},
+            dataLabels:{enabled:false},
+            plotOptions:{pie:{donut:{size:'70%', labels:{show:true, total:{show:true, label:'Total', color:textColor, fontSize:'12px'}}}}},
+            stroke:{show:false}
+          }).render();
+
+          new ApexCharts(document.querySelector('#chartCuotas'), {
+            chart:{type:'radialBar', height:280, fontFamily:baseFont},
+            series:[78, 15, 7], labels:['Pagado','Pendiente','Vencido'],
+            colors:['#00C853','#FF9800','#F44336'],
+            legend:{show:true, position:'bottom', labels:{colors:textColor}, fontSize:'11px'},
+            plotOptions:{radialBar:{hollow:{size:'45%'}, dataLabels:{value:{color:textColor}}}}
+          }).render();
+
+          new ApexCharts(document.querySelector('#chartAulas'), {
+            chart:{type:'bar', height:260, toolbar:{show:false}, fontFamily:baseFont},
+            series:[{name:'Matriculados', data:[28,30,19,24,26,30]},{name:'Capacidad', data:[30,30,32,32,30,30]}],
+            xaxis:{categories:['5°A','5°B','1°A Sec','3°C Sec','6°A','4°B'], labels:{style:{colors:textColor, fontSize:'11px'}}, axisBorder:{show:false}, axisTicks:{show:false}},
+            yaxis:{labels:{style:{colors:textColor, fontSize:'11px'}}},
+            grid:{borderColor:gridColor, strokeDashArray:4},
+            colors:['#3949AB','#E6EBF3'], plotOptions:{bar:{borderRadius:6, columnWidth:'55%'}},
+            dataLabels:{enabled:false}, legend:{position:'top', horizontalAlign:'right', labels:{colors:textColor}, fontSize:'12px'},
+          }).render();
+        },
+
+        init(){
+          this.initKpis();
+          this.updateClock();
+          setInterval(()=>this.updateClock(), 30000);
+          setInterval(()=>{ this.secondsAgo++; }, 1000);
+          this.$nextTick(()=>{
+            lucide.createIcons();
+            this.initCharts();
+          });
+          this.$watch('currentPage', ()=> this.$nextTick(()=>lucide.createIcons()));
+          this.$watch('darkMode', ()=> this.$nextTick(()=>lucide.createIcons()));
+          setTimeout(()=> this.toast('info','WebSocket conectado','Sincronización en tiempo real activa'), 1200);
+        }
+      }
+    }
+</script>
+</body>
+</html>

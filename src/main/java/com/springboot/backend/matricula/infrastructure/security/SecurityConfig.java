@@ -30,8 +30,20 @@ public class SecurityConfig {
 
                 // Configuramos las reglas de autorización de rutas
                 .authorizeHttpRequests(auth -> auth
+                        // Recursos estáticos del frontend (prototipo HTML, CSS, JS, imágenes)
+                        .requestMatchers(
+                                "/",
+                                "/index.html",
+                                "/static/**",
+                                "/css/**",
+                                "/js/**",
+                                "/assets/**",
+                                "/favicon.ico"
+                        ).permitAll()
+
                         // ¡LA CLAVE ESTÁ AQUÍ! Permitimos acceso total a los endpoints de auth
                         .requestMatchers("/api/v1/auth/**").permitAll()
+
                         // Cualquier otra petición (como /matriculas) requiere estar autenticado
                         .anyRequest().authenticated()
                 )
